@@ -58,6 +58,36 @@ int membership();
 void loopAgain();
 void report();
 
+// Function to ask if another customer should be served
+void loopAgain() {
+    string next;
+    while (true) {
+        cout << "\nContinue to next user? (y for Yes, n for No) : ";
+        cin >> next;
+        cout << endl;
+
+        if (next.length() == 1) {
+            char ans = tolower(next[0]);
+
+            if (ans == 'y') {
+                // Reset cart and start over for the next customer
+                cart.clear();
+                logo();
+                mainMenu();
+                return;
+            }
+            else if (ans == 'n') {
+                // Exit program
+                exitProgram();
+                return;
+            }
+        }
+        // Invalid input handling
+        cout << "Invalid input, please retry!!" << endl
+            << "Please enter 'y' or 'n'." << endl;
+    }
+}
+
 // Function to ask customer about membership and assign discount
 int membership() {
     string member;
@@ -116,6 +146,164 @@ int membership() {
     }
 
     return membershipType; // 0 = no membership
+}
+
+// Function to print receipt, handle payment, and collect rating
+void receipt(int membershipType, const InvoiceSummary& summary) {
+    string phone = "No. Telephone: 03-11199999";
+    string shopName = " THE Y Enterprise";
+    string paymentMethod, method;
+    double paymentAmount = 0, change;
+    int width = 60, rating;
+    int pad = (width - phone.length()) / 2;
+    int pad2 = (width - shopName.length()) / 2;
+
+    // Get current date and time
+    time_t now = time(0);
+    tm ltm;
+    localtime_s(&ltm, &now);
+    char dateStr[30];
+    strftime(dateStr, sizeof(dateStr), "%d-%m-%Y %H:%M:%S", &ltm);
+
+    // Ask payment method
+    cout << "Please select your payment method "
+        << "(w=e-Wallet, c=Credit Card, d=Debit Card, m=Cash) : ";
+    cin >> paymentMethod;
+
+    // Validate payment method
+    while (paymentMethod.length() != 1 ||
+        (tolower(paymentMethod[0]) != 'w' &&
+            tolower(paymentMethod[0]) != 'c' &&
+            tolower(paymentMethod[0]) != 'd' &&
+            tolower(paymentMethod[0]) != 'm')) {
+        cout << "Invalid method, please retry!!" << endl;
+        cout << "Please select your payment method "
+            << "(w=e-Wallet, c=Credit Card, d=Debit Card, m=Cash) : ";
+        cin >> paymentMethod;
+    }
+
+    // Map method choice to text
+    if (tolower(paymentMethod[0]) == 'w') method = "e-Wallet";
+    else if (tolower(paymentMethod[0]) == 'c') method = "Credit Card";
+    else if (tolower(paymentMethod[0]) == 'd') method = "Debit Card";
+    else if (tolower(paymentMethod[0]) == 'm') method = "Cash";
+
+    // Ask payment amount
+    cout << "Payment amount: ";
+    cin >> paymentAmount;
+
+    // Validate payment amount
+    while (true) {
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Alphabet is not allowed !!" << endl;
+        }
+        else if (paymentAmount <= 0) {
+            cout << "Amount must be positive !!" << endl;
+        }
+        else if (paymentAmount < summary.finalAmount) {
+            cout << "The amount is insufficient !!" << endl;
+        }
+        else {
+            break;
+        }
+
+        cout << "Please enter a payable amount: ";
+        cin >> paymentAmount;
+    }
+
+    // Print receipt header
+    cout << "\nReceipt:" << endl;
+    cout << string(pad2, ' ') << shopName << endl;
+    cout << setw(60) << setfill('=') << "=" << endl;
+    cout << setfill(' ');
+    cout << string(pad, ' ') << phone << endl;
+    cout << left << setw(35)
+        << ("Invoice No: " + to_string(invoiceNo))
+        << right << "Date: " << dateStr << endl << endl;
+
+    // Print purchased items
+    for (auto& item : cart) {
+        double itemTotal = item.price * item.quantity;
+        cout << left << setw(17) << item.product
+            << setw(4) << "( "
+            << item.quantity
+            << setw(6) << " x "
+            << fixed << setprecision(2) << item.price
+            << " )"
+            << right << setw(10)
+            << fixed << setprecision(2) << itemTotal << endl;
+    }
+
+    // Calculate change
+    change = paymentAmount - summary.finalAmount;
+
+    // Print summary totals
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+
+    cout << left << setw(25) << "Subtotal (RM) " << ":"
+        << setw(10) << fixed << setprecision(2) << summary.total << endl;
+    cout << left << setw(25) << "Service Charge (6%) " << ":"
+        << setw(10) << fixed << setprecision(2) << summary.serviceCharge << endl;
+    cout << left << setw(25) << "Tax (10%) " << ":"
+        << setw(10) << fixed << setprecision(2) << summary.tax << endl;
+    cout << left << setw(25) << "Membership Discount " << ":"
+        << setw(10) << fixed << setprecision(2) << -summary.discount << endl;
+
+    cout << endl;
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+
+    cout << left << setw(25) << "Total items bought " << ":"
+        << setw(10) << summary.totalQuantity << endl;
+    cout << left << setw(25) << "Total Payable (RM) " << ":"
+        << setw(10) << fixed << setprecision(2) << summary.finalAmount << endl;
+    cout << left << setw(25) << "Payment Method " << ":"
+        << setw(10) << method << endl;
+    cout << left << setw(25) << "Payment Amount " << ":"
+        << setw(10) << paymentAmount << endl;
+    cout << left << setw(25) << "Change " << ":"
+        << setw(10) << change << endl;
+
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+
+    // Thank-you message and rating input
+    cout << "Thank you for using THE Y Enterprise Retail System!" << endl;
+    cout << "How would you rate our services? (1-5) : ";
+    cin >> rating;
+
+    // Validate rating input
+    while (true) {
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Alphabet is not allowed !!" << endl;
+        }
+        else if (rating < 1 || rating > 5) {
+            cout << "The integer is out of the range between 1-5 !!" << endl;
+        }
+        else {
+            break;
+        }
+
+        cout << "How would you rate our services? (1-5) : ";
+        cin >> rating;
+    }
+
+    cout << "Thank you for giving us a rating for our services. ^_^" << endl;
+    cout << "We truly appreciate your feedback" << endl;
+
+    // Store invoice (with rating) into history
+    InvoiceSummary copy = summary;
+    copy.rating = rating;
+    copy.items = cart;
+    allInvoices.push_back(copy);
+
+    // Ask if next customer
+    loopAgain();
 }
 
 // Function to calculate totals and print invoice preview (before payment)
