@@ -58,6 +58,19 @@ int membership();
 void loopAgain();
 void report();
 
+// Function to display ASCII art store logo
+void logo() {
+    cout << "                 XXX          " << endl;
+    cout << "                X   X         " << endl;
+    cout << "                X   X         " << endl;
+    cout << "            XXXXXXXXXXXXX     " << endl;
+    cout << "            X   Y   Y   X     " << endl;
+    cout << "            X    Y Y    X     " << endl;
+    cout << "            X     Y     X     " << endl;
+    cout << "            X     Y     X     " << endl;
+    cout << "            XXXXXXXXXXXXX     " << endl;
+}
+
 // Function to ask if another customer should be served
 void loopAgain() {
     string next;
@@ -688,3 +701,101 @@ void report() {
     loopAgain();
 }
 
+// Function to exit system
+void exitProgram() {
+    cout << "Thank you for using THE Y Enterprise Retail System! ^_^" << endl;
+}
+
+// Main menu for customer or staff
+void mainMenu() {
+    string choice;
+    int option;
+
+    cout << "\nWelcome to THE Y Enterprise Retail System" << endl;
+    cout << "Are you a customer or staff? (c for customer, s for staff) : ";
+    cin >> choice;
+
+    // Validate input
+    while (choice.length() != 1 || (tolower(choice[0]) != 'c' && tolower(choice[0]) != 's')) {
+        cout << "Invalid choice, please retry!!" << endl;
+        cout << "Are you a customer or staff? (c for customer, s for staff) : ";
+        cin >> choice;
+    }
+
+    // Customer menu
+    if (tolower(choice[0]) == 'c') {
+        cout << "1. Ordering" << endl
+            << "2. Exit" << endl;
+        cout << "Welcome customer " << to_string(cusNum++) << endl;
+        cout << "Please enter your option (1/2) : ";
+        cin >> option;
+
+        // Validate input
+        while (true) {
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Alphabet is not allowed !!" << endl;
+            }
+            else if (option < 1 || option > 2) {
+                cout << "The integer is out of the range between 1-2 !!" << endl;
+            }
+            else {
+                break;
+            }
+            cout << "Please enter your option (1/2) : ";
+            cin >> option;
+        }
+
+        // Ordering flow
+        if (option == 1) {
+            int category = chooseCategory();
+            chooseType(category);
+            int membershipType = membership();
+            InvoiceSummary summary = invoice(membershipType);
+            receipt(membershipType, summary);
+        }
+        else if (option == 2) {
+            exitProgram();
+        }
+    }
+    // Staff menu
+    else if (tolower(choice[0]) == 's') {
+        cout << "1. Report" << endl
+            << "2. Exit" << endl;
+        cout << "Welcome staff" << endl;
+        cout << "Please enter your option (1/2) : ";
+        cin >> option;
+
+        // Validate input
+        while (true) {
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Alphabet is not allowed !!" << endl;
+            }
+            else if (option < 1 || option > 2) {
+                cout << "The integer is out of the range between 1-2 !!" << endl;
+            }
+            else {
+                break;
+            }
+            cout << "Please enter your option (1/2) : ";
+            cin >> option;
+        }
+
+        if (option == 1) {
+            report();
+        }
+        else if (option == 2) {
+            exitProgram();
+        }
+    }
+}
+
+// Entry point
+int main() {
+    logo();       // Display logo at start
+    mainMenu();   // Show menu
+    return 0;
+}
