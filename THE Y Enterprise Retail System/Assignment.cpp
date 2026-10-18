@@ -58,6 +58,162 @@ int membership();
 void loopAgain();
 void report();
 
+// Function to ask customer about membership and assign discount
+int membership() {
+    string member;
+    int membershipType = 0;
+
+    // Ask if customer is a member
+    cout << "Are you a member of THE Y Enterprise? (y for Yes, n for No) : ";
+    cin >> member;
+
+    // Validate input (must be y or n)
+    while (member.length() != 1 ||
+        (tolower(member[0]) != 'y' && tolower(member[0]) != 'n')) {
+        cout << "Invalid choice, please retry!!" << endl;
+        cout << "Are you a member of THE Y Enterprise? (y for Yes, n for No) : ";
+        cin >> member;
+    }
+
+    // If customer is a member, ask membership tier
+    if (tolower(member[0]) == 'y') {
+        cout << "Customer membership Tier List" << endl
+            << "1. Bronze" << endl
+            << "2. Silver" << endl
+            << "3. Gold" << endl;
+
+        cout << "What is your membership type? (1-3) : ";
+        cin >> membershipType;
+
+        // Validate membership input
+        while (true) {
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Alphabet is not allowed !!" << endl;
+            }
+            else if (membershipType < 1 || membershipType > 3) {
+                cout << "The integer is out of the range between 1-3 !!" << endl;
+            }
+            else {
+                break;
+            }
+
+            cout << "Please enter your membership type (1-3) : ";
+            cin >> membershipType;
+        }
+
+        // Display discount info
+        if (membershipType == 1) {
+            cout << "Congratulations you have a 5% discount !!!" << endl << endl;
+        }
+        else if (membershipType == 2) {
+            cout << "Congratulations you have a 10% discount !!!" << endl << endl;
+        }
+        else if (membershipType == 3) {
+            cout << "Congratulations you have a 15% discount !!!" << endl << endl;
+        }
+    }
+
+    return membershipType; // 0 = no membership
+}
+
+// Function to calculate totals and print invoice preview (before payment)
+InvoiceSummary invoice(int membershipType) {
+    InvoiceSummary summary{};
+    summary.invoiceNumber = invoiceNo++;
+
+    string phone = "No. Telephone: 03-11199999";
+    string shopName = " THE Y Enterprise";
+    double total = 0;
+    int totalQuantity = 0, width = 60;
+    int pad = (width - phone.length()) / 2;
+    int pad2 = (width - shopName.length()) / 2;
+
+    // Get date and time
+    time_t now = time(0);
+    tm ltm;
+    localtime_s(&ltm, &now);
+    char dateStr[30];
+    strftime(dateStr, sizeof(dateStr), "%d-%m-%Y %H:%M:%S", &ltm);
+
+    // Print invoice header
+    cout << "Invoice: " << endl;
+    cout << string(pad2, ' ') << shopName << endl;
+    cout << setw(60) << setfill('=') << "=" << endl;
+    cout << setfill(' ');
+    cout << string(pad, ' ') << phone << endl;
+    cout << left << setw(35) << ("Invoice No: " + to_string(invoiceNo))
+        << right << "Date: " << dateStr << endl << endl;
+
+    // Print table headers
+    cout << left << setw(5) << "No."
+        << setw(20) << "Product"
+        << setw(15) << "Price(RM)"
+        << setw(10) << "Qty"
+        << setw(10) << "Total(RM)" << endl;
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+
+    // List items
+    int i = 1;
+    for (auto& item : cart) {
+        double itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        totalQuantity += item.quantity;
+
+        cout << left << setw(5) << i++
+            << setw(20) << item.product
+            << setw(15) << fixed << setprecision(2) << item.price
+            << setw(10) << item.quantity
+            << setw(10) << fixed << setprecision(2) << itemTotal << endl;
+    }
+
+    // Print subtotal
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+    cout << right << setw(45) << "Subtotal (RM) " << ":"
+        << setw(10) << fixed << setprecision(2) << total << endl;
+
+    // Calculate service charge, tax, and discount
+    double serviceCharge = total * 0.06;
+    double tax = total * 0.10;
+    double discount = 0.0;
+
+    if (membershipType == 1) discount = total * discount1;
+    else if (membershipType == 2) discount = total * discount2;
+    else if (membershipType == 3) discount = total * discount3;
+
+    double finalAmount = total + serviceCharge + tax - discount;
+
+    // Print charges and totals
+    cout << right << setw(45) << "Service Charge (6%) " << ":"
+        << setw(10) << fixed << setprecision(2) << serviceCharge << endl;
+    cout << right << setw(45) << "Tax (10%) " << ":"
+        << setw(10) << fixed << setprecision(2) << tax << endl;
+    cout << right << setw(45) << "Membership Discount " << ":"
+        << setw(10) << fixed << setprecision(2) << -discount << endl;
+
+    cout << endl;
+    cout << setfill('-') << setw(60) << "-" << endl;
+    cout << setfill(' ');
+    cout << right << setw(45) << "Total items bought " << ":"
+        << setw(10) << totalQuantity << endl;
+    cout << right << setw(45) << "Total Payable (RM) " << ":"
+        << setw(10) << fixed << setprecision(2) << finalAmount << endl;
+    cout << setfill('-') << setw(60) << "-" << endl;
+
+    // Store values in summary
+    summary.total = total;
+    summary.serviceCharge = serviceCharge;
+    summary.tax = tax;
+    summary.discount = discount;
+    summary.finalAmount = finalAmount;
+    summary.totalQuantity = totalQuantity;
+
+    return summary;
+}
+
 // Function to allow user to choose a product category
 int chooseCategory() {
     int category;
@@ -256,5 +412,91 @@ void chooseType(int category) {
             chooseType(newCategory);
         }
     }
+}
+
+// Function to generate daily sales report (staff option)
+void report() {
+    if (allInvoices.empty()) {
+        cout << "No transactions recorded yet." << endl;
+        return;
+    }
+
+    int totalCustomers = allInvoices.size();
+    double totalSales = 0, totalDiscount = 0;
+    int totalItems = 0, totalRatings = 0;
+    map<int, int> categorySales;
+
+    // Summarize data from invoices
+    for (auto& inv : allInvoices) {
+        totalSales += inv.finalAmount;
+        totalDiscount += inv.discount;
+        totalItems += inv.totalQuantity;
+        totalRatings += inv.rating;
+
+        for (auto& it : inv.items) {
+            categorySales[it.category] += it.quantity;
+        }
+    }
+
+    // Find top and least selling categories
+    int topCategory = -1;
+    int leastCategory = -1;
+    int maxSold = -1;
+    int minSold = INT_MAX;
+
+    if (categorySales.empty()) {
+        cout << "No items sold today." << endl;
+    }
+    else {
+        for (auto& c : categorySales) {
+            if (c.second > maxSold) {
+                maxSold = c.second;
+                topCategory = c.first;
+            }
+            if (c.second < minSold) {
+                minSold = c.second;
+                leastCategory = c.first;
+            }
+        }
+    }
+
+    double avgSpending = totalSales / totalCustomers;
+    double avgRating = static_cast<double>(totalRatings) / totalCustomers;
+
+    // Get current date/time
+    time_t now = time(0);
+    tm ltm;
+    localtime_s(&ltm, &now);
+    char dateStr[30];
+    strftime(dateStr, sizeof(dateStr), "%d-%m-%Y %H:%M:%S", &ltm);
+
+    // Print report
+    string report = "Daily Sales Report";
+    int width = 60;
+    int pad = (width - report.length()) / 2;
+    int pad2 = (width - strlen(dateStr)) / 2;
+
+    cout << string(pad, ' ') << report << endl;
+    cout << string(pad2, ' ') << dateStr << endl;
+    cout << setw(width) << setfill('=') << "=" << endl;
+    cout << setfill(' ');
+
+    cout << "Total Customer                 : " << totalCustomers << endl;
+    cout << "Overall Sales (RM)             : " << fixed << setprecision(2) << totalSales << endl;
+    cout << "Total Item Sold                : " << totalItems << endl;
+
+    for (auto& c : categorySales) {
+        cout << "  Category " << c.first << ": " << c.second << " items" << endl;
+    }
+
+    cout << "Top Selling Category           : Category " << topCategory << " (" << maxSold << " items)" << endl;
+    cout << "Least Selling Category         : Category " << leastCategory << " (" << minSold << " items)" << endl;
+    cout << "Average Spending per Customer  : RM " << avgSpending << endl;
+    cout << "Discount Used (RM)             : " << totalDiscount << endl;
+    cout << "Average Rating                 : " << fixed << setprecision(1) << avgRating << "/5" << endl;
+    cout << setw(60) << setfill('=') << "=" << endl;
+    cout << setfill(' ');
+
+    loopAgain();
 }
 
