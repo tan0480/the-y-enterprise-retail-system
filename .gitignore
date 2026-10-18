@@ -1,0 +1,35 @@
+# IDE caches and personal settings
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build output
+x64/
+x86/
+Win32/
+Debug/
+Release/
+build/
+output/
+*.exe
+*.dll
+*.obj
+*.o
+*.pdb
+*.idb
+*.ilk
+*.tlog
+*.log
+
+# Temporary files, documents, and secrets
+tmp/
+*.tmp
+*.bak
+*.pdf
+*.docx
+*.zip
+.env
+.env.*
+*.pem
+*.key
